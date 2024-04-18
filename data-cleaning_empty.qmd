@@ -147,7 +147,7 @@ No negative value detected ✅
 Let's write the presence table to a csv file:
 
 ```{r}
-write_csv(snowsurvey_fixed, file.path(datadir_processed, "snow_cover.csv"))
+write_csv(snowsurvey_fixed,  file.path(datadir_processed, "snow_cover.csv"))
 ```
 
 <hr> 
@@ -159,10 +159,10 @@ write_csv(snowsurvey_fixed, file.path(datadir_processed, "snow_cover.csv"))
 
 Import the species csv files with the bird species information:
 
-```{r}
+```{r, warning =F , message = F}
 species_csv <- read_csv(file.path(datadir_raw, species_file))
 
-glimpse(species_csv)
+#glimpse(species_csv)
 ```
 
 This data set is stored in a wide format where each specie has its own column. This means that every time we discover a new species we will have to add a column. In addition, a bunch of `0` are stored in this table but do not really provide any information. According to the metadata:
@@ -186,10 +186,6 @@ species_long <- species_csv %>%
   )
 ```
 
-
-```{r}
-
-```
 
 We want to focus on the presence and absence of species and not the count. Let's create a new column for presence where anything else than 0 is considered present
 
@@ -220,7 +216,7 @@ We have 319 species observed in this table. The "convention" seems to be that `_
 Let's write the presence table to a csv file:
 
 ```{r}
-write_csv(species_presence, file.path(datadir_processed, "species_presence.csv"))
+#write_csv(species_presence, file.path(datadir_processed, "species_presence.csv"))
 ```
 
 

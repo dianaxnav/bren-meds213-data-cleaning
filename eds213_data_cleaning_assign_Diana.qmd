@@ -1,0 +1,169 @@
+---
+title: "Data Cleaning Assignment2"
+author: "Diana Navarro"
+date: "2024-04-17"
+output: html_document
+---
+
+GitHub Repo link: 
+https://github.com/dianaxnav/bren-meds213-data-cleaning
+
+# This is for Water Cover
+## Load in the cleaned data 
+
+```{r, warning = F, message = F}
+library(tidyverse)
+#read in the data 
+snow_cover <- read_csv(here::here("data","processed", "snow_cover.csv"))
+```
+
+##Clean and wrangle the data 
+
+```{r}
+#find the issues 
+snow_cover %>% 
+  filter(Water_cover == ".") #%>% 
+  #View()
+
+#replace them all with NA since there is no supplemental information in the provided metadata
+snowcover_fixed <- snow_cover %>% 
+  # filter(Snow_cover == ".") %>% 
+  mutate(across(ends_with("_cover"), ~ifelse(.x == ".", NA, .x)))
+
+#set the "-" to NA
+snowcover_fixed <- snowcover_fixed%>% 
+  # filter(Snow_cover == "-") %>%
+  mutate(across(ends_with("_cover"), ~ifelse(.x == "-", NA, .x)))
+
+#"n/a" is pretty clear regarding how to fix it
+snowcover_fixed <- snowcover_fixed %>% 
+  mutate(Water_cover = ifelse(Water_cover == "n/a", NA, Water_cover))
+
+#unk is unknown--change to NA
+snowcover_fixed <- snowcover_fixed%>% 
+  mutate(Water_cover = ifelse(Water_cover == "unk", NA, Water_cover))
+
+#Finally we will set "<1" as zero (quite arbitrary indeed)
+snowcover_fixed <- snowcover_fixed %>% 
+  mutate(Water_cover = ifelse(Water_cover == "<1", "0", Water_cover))
+
+#now lets test 
+snowcover_fixed %>% 
+  count(Water_cover) %>%
+  filter(is.na(as.numeric(Water_cover)))
+
+```
+
+```{r}
+#transform 
+snowcover_fixed <- snowcover_fixed %>% 
+  mutate(Water_cover = as.numeric(Water_cover))
+
+#finally have a numeric column now lets see which vals above 100 
+snowcover_fixed %>% 
+  filter(Water_cover > 100) 
+```
+
+```{r}
+#set the vals above 100 to NA
+snowcover_fixed <- snowcover_fixed %>% 
+  mutate(Water_cover = ifelse(Water_cover > 100, NA, Water_cover))
+#check the neg values 
+snowcover_fixed %>% 
+  filter(Water_cover < 0) 
+```
+**Yay there are none!**
+
+```{r}
+#Let's write the presence table to a csv file
+#write_csv(snowcover_fixed, "water_cover.csv")
+```
+
+# This is Land Cover
+
+##Clean and wrangle the data 
+
+```{r, warning = F}
+#load in the updated data again but water cover
+water_cover <- read_csv(here::here("water_cover.csv"))
+
+#find the issues 
+water_cover %>% 
+  filter(Land_cover == ".") #%>% 
+  #View()
+
+#"n/a" is pretty clear regarding how to fix it
+landcover_fixed <- water_cover %>% 
+  mutate(Land_cover = ifelse(Land_cover == "n/a", NA, Land_cover))
+
+#unk is unknown--change to NA
+landcover_fixed <- landcover_fixed%>% 
+  mutate(Land_cover = ifelse(Land_cover == "unk", NA, Land_cover))
+
+#Finally we will set "<1" as zero (quite arbitrary indeed)
+landcover_fixed <- landcover_fixed %>% 
+  mutate(Land_cover = ifelse(Land_cover == "<1", "0", Land_cover))
+
+#now lets test 
+landcover_fixed %>% 
+  count(Land_cover) %>%
+  filter(is.na(as.numeric(Land_cover)))
+
+```
+
+```{r, warning = F, message = F}
+#transform 
+landcover_fixed <- landcover_fixed %>% 
+  mutate(Land_cover = as.numeric(Land_cover))
+
+#finally have a numeric column now lets see which vals above 100 
+#landcover_fixed %>% 
+#  filter(Land_cover > 100) 
+```
+
+```{r}
+#set the vals above 100 to NA
+landcover_fixed <- landcover_fixed %>% 
+  mutate(Land_cover = ifelse(Land_cover > 100, NA, Land_cover))
+#check the neg values 
+#landcover_fixed %>% 
+#  filter(Land_cover < 0) 
+
+#fix the neg
+#remove negative values and values over 100
+landcover_without  <- landcover_fixed  %>%
+  filter(Land_cover >= 0 & Land_cover <= 100)
+
+#no more negative :) 
+
+# If you want to view the resulting dataframe
+head(landcover_without)
+```
+
+
+```{r}
+#Let's write the presence table to a csv file
+#write_csv(landcover_without, "Land_cover.csv")
+```
+
+# Total cover 
+
+```{r}
+#combine all total cover
+total_cover <- landcover_without %>%
+  mutate(Total_cover = Snow_cover + Water_cover + Land_cover) %>% 
+  mutate(Total_cover = ifelse(Total_cover == 100, Total_cover, NA)) #%>% 
+
+#now get rid of the NA's where Total_cover does not equal 100
+total_cover  <- total_cover  %>%
+  filter(!is.na(Total_cover))
+
+```
+
+#finished file
+```{r}
+#write for new dataframe with cleaned land cover values
+write_csv(total_cover, "all_cover_fixed_diananavarro.csv")
+```
+
+**This is the csv file that contains all the cleaned data, I ended up building off each cleaned csv file, so the last file shows the final total cover.** 
